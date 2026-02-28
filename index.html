@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>松子 · Feifan Vision Studio</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!--
+    Noto Serif SC 200/300/400 → 思源宋体，中文全站主字体
+    Jost 200/300 → 几何无衬线，英文 UI 标签
+  -->
+  <!--
+    Noto Serif SC   → 中文主字体，200/300/400
+    Playfair Display → 英文展示字体，高对比度衬线，编辑感
+    Jost            → 英文 UI 小标签
+  -->
+  <link href="https://fonts.googleapis.com/css2?family=Liu+Jian+Mao+Cao&family=Noto+Serif+SC:wght@200;300;400&family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Jost:wght@200;300&display=swap" rel="stylesheet">
+
+  <style>
+    /* ═══════════════════════════════════
+       色彩 & 字体变量
+    ═══════════════════════════════════ */
+    :root {
+      --ivory:     #F5F0E8;
+      --cream:     #EDE6D6;
+      --parchment: #D8CFBA;
+      --tan:       #C4A882;
+      --rose:      #B89494;
+      --brown:     #7A6248;
+      --dark:      #1E1810;
+      --muted:     #9A8A74;
+      --f-hero:    'Liu Jian Mao Cao', cursive;  /* 刘建毛草，展示用 */
+      --f-serif:   'Noto Serif SC', 'Songti SC', serif;      /* 正文 */
+      --f-display: 'Playfair Display', Georgia, serif;        /* 英文展示 */
+      --f-ui:      'Jost', sans-serif;                        /* 英文UI */
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--ivory);
+      color: var(--dark);
+      font-family: var(--f-serif);
+      font-weight: 200;
+      line-height: 1.9;
+      overflow-x: hidden;
+    }
+
+    /* ─── 胶片颗粒叠层 ─── */
+    body::before {
+      content: '';
+      position: fixed; inset: -50%;
+      width: 200%; height: 200%;
+      pointer-events: none; z-index: 9998; opacity: .022;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      animation: grain .35s steps(1) infinite;
+    }
+
+    @keyframes grain {
+      0%,100%{ transform:translate(0,0) }
+      20%{ transform:translate(-1%,2%) }
+      40%{ transform:translate(2%,-1%) }
+      60%{ transform:translate(-2%,1%) }
+      80%{ transform:translate(1%,-2%) }
+    }
+
+    /* ═══════════════════════════════════
+       自定义鼠标 (hover 设备专用)
+    ═══════════════════════════════════ */
+    @media (hover: hover) { * { cursor: none !important; } }
+
+    /* ─── 自定义鼠标：Ember 잔광 ───────────────────────────────
+       关键：position:fixed 必须配合 top:0; left:0
+       否则 translate(mx,my) 不从屏幕左上角算起，光标会跑偏
+    ──────────────────────────────────────────────────────── */
+
+    /* 核心点：暖金色，精确跟随 */
+    .c-core {
+      position: fixed; top: 0; left: 0;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--tan);
+      box-shadow: 0 0 10px 3px rgba(196,168,130,.5),
+                  0 0 20px 6px rgba(196,168,130,.15);
+      pointer-events: none;
+      z-index: 99999;
+      will-change: transform;
+    }
+
+    /* 滞后圆环：柔和金边 */
+    .c-ring {
+      position: fixed; top: 0; left: 0;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      border: 1px solid rgba(196,168,130,.45);
+      pointer-events: none;
+      z-index: 99998;
+      will-change: transform;
+      transition: width .35s cubic-bezier(.25,.46,.45,.94),
+                  height .35s cubic-bezier(.25,.46,.45,.94),
+                  border-color .3s;
+    }
+
+    /* 悬停照片：圆环放大 */
+    .c-ring.on-photo {
+      width: 54px; height: 54px;
+      border-color: rgba(196,168,130,.25);
+    }
+
+    /* 悬停链接：圆环收缩变玫瑰色 */
+    .c-ring.on-link {
+      width: 16px; height: 16px;
+      border-color: rgba(184,148,148,.8);
+    }
+
+    /* 火花粒子：移动时飞出 */
+    .c-spark {
+      position: fixed; top: 0; left: 0;
+      width: 3px; height: 3px;
+      border-radius: 50%;
+      background: var(--tan);
+      pointer-events: none;
+      z-index: 99997;
+      animation: emberFly .65s ease-out forwards;
+    }
+
+    @keyframes emberFly {
+      0%   { opacity: .75; transform: translate(var(--ex),var(--ey)) scale(1); }
+      100% { opacity: 0;   transform: translate(var(--ex2),var(--ey2)) scale(0); }
+    }
+
+    /* ═══════════════════════════════════
+       花朵绽放（触摸/点击）
+    ═══════════════════════════════════ */
+    .bloom { position:fixed; pointer-events:none; z-index:99996; transform:translate(-50%,-50%); }
+
+    .bloom-petal {
+      position:absolute; width:9px; height:19px;
+      top:-9.5px; left:-4.5px;
+      border-radius:50% 50% 40% 40%;
+      transform-origin:50% 100%;
+      transform:rotate(var(--a,0deg));
+      animation:petalOpen .9s cubic-bezier(.22,.61,.36,1) forwards;
+      animation-delay:var(--delay,0s); opacity:0;
+    }
+
+    @keyframes petalOpen {
+      0%  { opacity:0;   transform:rotate(var(--a)) scale(0) translateY(0); }
+      25% { opacity:1; }
+      65% { opacity:.85; transform:rotate(var(--a)) scale(1) translateY(-20px); }
+      100%{ opacity:0;   transform:rotate(var(--a)) scale(.5) translateY(-34px); }
+    }
+
+    .bloom-center {
+      position:absolute; width:7px; height:7px;
+      background:var(--tan); border-radius:50%;
+      top:-3.5px; left:-3.5px;
+      animation:centerPop .5s ease forwards; opacity:0;
+    }
+
+    @keyframes centerPop {
+      0%  { opacity:0; transform:scale(0); }
+      50% { opacity:1; transform:scale(1.4); }
+      100%{ opacity:0; transform:scale(.6); }
+    }
+
+    .bloom-spark {
+      position:absolute; width:3px; height:3px;
+      border-radius:50%; top:0; left:0;
+      animation:sparkFly .7s ease-out forwards;
+      animation-delay:var(--delay,0s); opacity:0;
+    }
+
+    @keyframes sparkFly {
+      0%  { opacity:0; transform:rotate(var(--a)) translateY(0) scale(0); }
+      30% { opacity:1; }
+      100%{ opacity:0; transform:rotate(var(--a)) translateY(calc(-1 * var(--d,20px))) scale(0); }
+    }
+
+    /* ═══════════════════════════════════
+       滚动淡入
+    ═══════════════════════════════════ */
+    .reveal {
+      opacity:0; transform:translateY(22px);
+      transition:opacity .9s ease, transform .9s ease;
+    }
+
+    .reveal.in-view { opacity:1; transform:translateY(0); }
+
+    /* ═══════════════════════════════════
+       导航
+    ═══════════════════════════════════ */
+    .nav {
+      position: fixed; top:0; left:0; right:0; z-index:200;
+      display: flex; justify-content:space-between; align-items:center;
+      padding: 1rem 2.4rem;
+      background: rgba(245,240,232,.85);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(196,168,130,.12);
+      transition: box-shadow .3s;
+    }
+
+    .nav.scrolled { box-shadow: 0 2px 20px rgba(30,24,16,.06); }
+
+    .nav-logo {
+      font-family: var(--f-hero);
+      font-size: 1.4rem;
+      letter-spacing: .2em;
+      color: var(--brown); text-decoration: none;
+      transition: opacity .3s;
+    }
+
+    .nav-logo:hover { opacity: .7; }
+
+    .nav-links { display:flex; gap:2.2rem; list-style:none; }
+
+    .nav-links a {
+      font-family: var(--f-ui); font-weight:200; font-size:.7rem;
+      letter-spacing:.2em; text-transform:uppercase;
+      color: var(--muted); text-decoration:none;
+      position:relative; transition:color .3s;
+    }
+
+    .nav-links a::after {
+      content:''; position:absolute; bottom:-2px; left:0;
+      width:0; height:1px; background:var(--tan);
+      transition:width .3s;
+    }
+
+    .nav-links a:hover { color:var(--tan); }
+    .nav-links a:hover::after { width:100%; }
+
+    .nav-toggle {
+      display:none; flex-direction:column; gap:5px;
+      background:none; border:none; padding:4px;
+    }
+
+    .nav-toggle span {
+      display:block; width:22px; height:1px;
+      background:var(--brown); transition:all .3s;
+    }
+
+    .mobile-menu {
+      display:none; position:fixed; top:56px; left:0; right:0;
+      background:rgba(245,240,232,.97); backdrop-filter:blur(20px);
+      z-index:199; padding:1.5rem 2.4rem;
+      border-bottom:1px solid var(--parchment);
+      flex-direction:column; gap:1rem;
+    }
+
+    .mobile-menu.open { display:flex; }
+
+    .mobile-menu a {
+      font-family:var(--f-ui); font-weight:300; font-size:.85rem;
+      letter-spacing:.15em; text-transform:uppercase;
+      color:var(--brown); text-decoration:none;
+      padding:.5rem 0; border-bottom:1px solid rgba(216,207,186,.35);
+    }
+
+    /* ═══════════════════════════════════
+       HERO — 暗室胶片分屏
+       深色底  左：文字  右：照片硬切
+    ═══════════════════════════════════ */
+    #hero {
+      min-height: 100dvh;
+      display: grid;
+      grid-template-columns: 45fr 55fr;
+      position: relative;
+      overflow: hidden;
+      /* 深色背景 — 暗室氛围，照片无需融合背景色 */
+      background: #141009;
+    }
+
+    /* 左侧文字柱 */
+    .hero-text {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 7rem 3.5rem 4rem 3.5rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* 顶部工作室小标签 — Playfair Display，高对比度衬线 */
+    .hero-studio {
+      font-family: var(--f-display);
+      font-style: normal;
+      font-size: .75rem;
+      font-weight: 400;
+      letter-spacing: .38em;
+      text-transform: uppercase;
+      color: var(--tan);
+      display: block;
+      margin-bottom: 1.6rem;
+      opacity: 0;
+      animation: heroIn 1.2s ease .2s forwards;
+    }
+
+    /* Hero 主诗句 — ZCOOL XiaoWei 展示字体，有笔墨气息 */
+    .hero-name {
+      font-family: var(--f-hero);
+      font-size: clamp(3.5rem, 8vw, 7.5rem);
+      color: var(--ivory);
+      line-height: 1.25;
+      letter-spacing: .12em;
+      opacity: 0;
+      animation: heroIn 1.8s ease .4s forwards;
+    }
+
+    /* 身份说明 */
+    .hero-role {
+      font-family: var(--f-ui);
+      font-size: .6rem;
+      font-weight: 200;
+      letter-spacing: .35em;
+      text-transform: uppercase;
+      color: rgba(196,168,130,.55);
+      margin-top: 1.4rem;
+      opacity: 0;
+      animation: heroIn 1.2s ease .75s forwards;
+    }
+
+    /* 副诗句 */
+    .hero-verse {
+      font-family: var(--f-serif);
+      font-size: clamp(.82rem, 1.3vw, .94rem);
+      font-weight: 200;
+      color: rgba(245,240,232,.5);
+      margin-top: 2.4rem;
+      line-height: 2;
+      letter-spacing: .1em;
+      opacity: 0;
+      animation: heroIn 1.2s ease 1.05s forwards;
+    }
+
+    /* 滚动提示 */
+    .hero-scroll {
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+      margin-top: 3.5rem;
+      opacity: 0;
+      animation: heroIn 1.2s ease 1.4s forwards;
+    }
+
+    .hero-scroll-label {
+      font-family: var(--f-ui);
+      font-weight: 200;
+      font-size: .58rem;
+      letter-spacing: .3em;
+      text-transform: uppercase;
+      color: rgba(196,168,130,.5);
+    }
+
+    .hero-scroll-line {
+      width: 38px; height: 1px;
+      background: linear-gradient(to right, var(--tan), transparent);
+      animation: lineBreath 2.5s ease-in-out infinite;
+    }
+
+    @keyframes lineBreath {
+      0%,100%{ transform:scaleX(1); opacity:.4; }
+      50%    { transform:scaleX(1.3); opacity:.8; }
+    }
+
+    /* 右侧照片柱
+       不做渐变融合 — 照片直接存在，像暗室里的一张底片
+       用 CSS filter 轻微暖化，和深色背景自然呼应 */
+    .hero-photo {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center center;
+      display: block;
+      /* 轻微暖化 + 降亮，让照片色调融入暗室氛围 */
+      filter: sepia(18%) saturate(88%) brightness(0.86) contrast(1.04);
+      opacity: 0;
+      animation: heroIn 2s ease .1s forwards;
+    }
+
+    /* 照片左侧：一条细金线作为分界，取代渐变融合 */
+    .hero-photo::before {
+      content: '';
+      position: absolute;
+      top: 8%; left: 0;
+      width: 1px; height: 84%;
+      background: linear-gradient(to bottom,
+        transparent 0%,
+        rgba(196,168,130,.35) 20%,
+        rgba(196,168,130,.35) 80%,
+        transparent 100%);
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    /* 照片暗角叠层 — 像老胶片 */
+    .hero-photo::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at center,
+        transparent 55%,
+        rgba(14,10,5,.45) 100%);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* 浮动光尘粒子（深色背景上更可见） */
+    .hero-particle {
+      position: absolute; width:2px; height:2px;
+      border-radius:50%; background:var(--tan); pointer-events:none;
+      animation: floatUp var(--dur,8s) var(--delay,0s) ease-in-out infinite;
+      opacity:0;
+    }
+
+    @keyframes floatUp {
+      0%   { bottom:-5%; opacity:0; transform:translateX(0); }
+      10%  { opacity:var(--op,.3); }
+      90%  { opacity:var(--op,.3); }
+      100% { bottom:105%; opacity:0; transform:translateX(var(--dx,10px)); }
+    }
+
+    @keyframes heroIn {
+      from { opacity:0; transform:translateY(18px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* ═══════════════════════════════════
+       样片画廊
+    ═══════════════════════════════════ */
+    #gallery {
+      background: var(--cream);
+      padding: 6rem 2.5rem;
+    }
+
+    #gallery .wrap { max-width:1140px; margin:0 auto; }
+
+    /* 极简区块标题 */
+    .section-label-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--parchment);
+      padding-bottom: .8rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .sec-cn {
+      font-family: var(--f-serif);
+      font-size: clamp(1.1rem, 2.2vw, 1.5rem);
+      font-weight: 200;
+      color: var(--dark);
+      letter-spacing: .22em;
+    }
+
+    .sec-en {
+      font-family: var(--f-display);
+      font-style: italic;
+      font-size: .78rem;
+      font-weight: 400;
+      color: var(--muted);
+      letter-spacing: .12em;
+    }
+
+    /* 3列网格 — 照片之间有间距，照片本身无白边 */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .photo-card {
+      position: relative;
+      overflow: hidden;
+      border-radius: 0;
+      /* 比例定在容器上，img 才能真正撑满 */
+      aspect-ratio: 3/4;
+      background: #0f0c08;
+    }
+
+    .photo-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      display: block;
+      /* 轻微放大，配合容器 overflow:hidden 裁掉图片内容里的白边 */
+      transform: scale(1.05);
+      transition: transform .6s cubic-bezier(.25,.46,.45,.94);
+    }
+
+    /* 暗角叠层 — 只在最底部很轻地压一下，不要硬线 */
+    .photo-card::after {
+      content:''; position:absolute; inset:0; pointer-events:none;
+      background: linear-gradient(to bottom,
+        transparent 72%,
+        rgba(30,24,16,.14) 100%);
+      z-index:1;
+    }
+
+    .photo-card:hover {
+      z-index: 10;
+      box-shadow: 0 0 0 1px rgba(196,168,130,.2);
+    }
+
+    .photo-card:hover img { transform: scale(1.10); }
+
+    .photo-label {
+      position: absolute; bottom:.9rem; left:.9rem;
+      z-index:2;
+      font-family: var(--f-ui); font-style:normal; font-size:.6rem;
+      font-weight: 200; letter-spacing:.2em; text-transform: uppercase;
+      color: rgba(245,240,232,0);
+      transition: color .3s;
+    }
+
+    .photo-card:hover .photo-label { color:rgba(245,240,232,.85); }
+
+    /* ═══════════════════════════════════
+       关于松子
+    ═══════════════════════════════════ */
+    #about {
+      padding: 7rem 2.5rem;
+      max-width: 1140px;
+      margin: 0 auto;
+    }
+
+    .about-layout {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 6rem;
+      align-items: start;
+    }
+
+    /* 老照片白边 */
+    .about-frame {
+      background: #fff;
+      padding: 8px 8px 28px 8px;
+      box-shadow: 2px 4px 32px rgba(30,24,16,.09);
+      transform: rotate(-1.1deg);
+      transition: transform .5s ease;
+    }
+
+    .about-frame:hover { transform: rotate(0); }
+
+    .about-frame .about-photo-placeholder {
+      width:100%; aspect-ratio:3/4;
+      background: linear-gradient(150deg, #e5d9c8, #cdb08a);
+    }
+
+    .about-frame img {
+      width:100%; aspect-ratio:3/4;
+      object-fit:cover; object-position:center top; display:block;
+    }
+
+    .about-text { padding-top: .8rem; }
+
+    /* 大引言 — 毛笔草书 */
+    .about-quote {
+      font-family: var(--f-serif);
+      font-size: clamp(1.2rem, 2.4vw, 1.6rem);
+      color: var(--brown);
+      line-height: 1.8;
+      padding-left: 1.2rem;
+      border-left: 1px solid var(--tan);
+      margin-bottom: 2.2rem;
+    }
+
+    .about-body {
+      font-family: var(--f-serif);
+      font-size: .94rem; font-weight:200;
+      color: var(--muted); line-height:2.15;
+    }
+
+    .about-body p + p { margin-top:1.1rem; }
+
+    .about-stats {
+      display: flex; gap: 3rem;
+      margin-top: 2.5rem;
+      padding-top: 1.8rem;
+      border-top: 1px solid var(--parchment);
+    }
+
+    .stat-num {
+      font-family: var(--f-display); font-size:2.4rem; font-weight:400;
+      color:var(--tan); display:block; line-height:1;
+    }
+
+    .stat-label {
+      font-family:var(--f-ui); font-size:.6rem; font-weight:200;
+      letter-spacing:.18em; color:var(--muted); text-transform:uppercase;
+      display:block; margin-top:.35rem;
+    }
+
+    /* ═══════════════════════════════════
+       服务 — 竖排分栏
+       5列并排，中文竖向书写
+       像5格胶片负片
+    ═══════════════════════════════════ */
+    #services {
+      background: var(--cream);
+      padding: 6rem 0 0;
+    }
+
+    #services .wrap { max-width: 1140px; margin: 0 auto; padding: 0 2.5rem; }
+
+    /* 5列等宽，靠边框线区分，无间距 */
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      border-top: 1px solid rgba(196,168,130,.25);
+      border-left: 1px solid rgba(196,168,130,.25);
+      margin-top: 2.5rem;
+    }
+
+    .svc-col {
+      border-right: 1px solid rgba(196,168,130,.25);
+      border-bottom: 1px solid rgba(196,168,130,.25);
+      padding: 2.5rem 1.6rem 2rem;
+      min-height: 54vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* hover: 暖色从底部升起 */
+    .svc-col::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(to top,
+        rgba(196,168,130,.10) 0%,
+        rgba(196,168,130,.04) 100%);
+      transform: scaleY(0);
+      transform-origin: bottom;
+      transition: transform .55s cubic-bezier(.25,.46,.45,.94);
+      z-index: 0;
+    }
+
+    .svc-col:hover::before { transform: scaleY(1); }
+
+    /* 竖排中文服务名 */
+    .svc-cn-vert {
+      writing-mode: vertical-rl;
+      font-family: var(--f-serif);
+      font-weight: 200;
+      font-size: clamp(1.4rem, 1.8vw, 1.9rem);
+      letter-spacing: .35em;
+      color: var(--dark);
+      position: relative; z-index: 1;
+      align-self: flex-start;
+      transition: color .4s, letter-spacing .4s;
+    }
+
+    .svc-col:hover .svc-cn-vert {
+      color: var(--brown);
+      letter-spacing: .48em;
+    }
+
+    /* 底部区域 */
+    .svc-bottom {
+      position: relative; z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: .55rem;
+    }
+
+    /* 英文名 — Playfair Display 斜体，编辑感 */
+    .svc-en-vert {
+      font-family: var(--f-display);
+      font-style: italic;
+      font-size: .72rem;
+      font-weight: 400;
+      color: var(--parchment);
+      letter-spacing: .06em;
+      transition: color .35s;
+    }
+
+    .svc-col:hover .svc-en-vert { color: var(--tan); }
+
+    /* 诗句 — hover 时从下方升起 */
+    .svc-desc {
+      font-family: var(--f-serif);
+      font-size: .72rem;
+      font-weight: 200;
+      color: var(--muted);
+      line-height: 1.85;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .4s .08s ease, transform .4s .08s ease;
+    }
+
+    .svc-col:hover .svc-desc { opacity: 1; transform: translateY(0); }
+
+    /* 中等屏：3列 */
+    @media (max-width: 920px) {
+      .services-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    /* 手机：竖向改水平，关闭竖排文字 */
+    @media (max-width: 580px) {
+      #services { padding: 4rem 0 0; }
+      .services-grid { grid-template-columns: 1fr; }
+      .svc-col {
+        min-height: auto;
+        flex-direction: row;
+        align-items: center;
+        gap: 1.4rem;
+        padding: 1.2rem 1.5rem;
+      }
+      .svc-cn-vert {
+        writing-mode: horizontal-tb;
+        font-size: clamp(1rem, 4vw, 1.4rem);
+        letter-spacing: .1em;
+      }
+      .svc-desc { opacity: .7; transform: none; }
+    }
+
+    /* ═══════════════════════════════════
+       联系
+    ═══════════════════════════════════ */
+    #contact {
+      padding: 7rem 2.5rem 5rem;
+      text-align: center;
+      max-width: 1140px;
+      margin: 0 auto;
+    }
+
+    /* 诗句引言 */
+    .contact-verse {
+      font-family: var(--f-serif);
+      font-size: clamp(1.1rem, 2.2vw, 1.5rem);
+      color: var(--brown);
+      line-height: 2;
+      margin: 0 auto 1rem;
+      max-width: 440px;
+    }
+
+    .contact-sub {
+      font-family: var(--f-ui);
+      font-size: .65rem;
+      font-weight: 200;
+      color: var(--muted);
+      font-style: normal;
+      letter-spacing: .2em;
+      margin-bottom: 3rem;
+    }
+
+    .contact-row { display:flex; flex-wrap:wrap; gap:1rem; justify-content:center; }
+
+    .contact-btn {
+      display: inline-flex; align-items:center; gap:.65rem;
+      padding: .75rem 2rem;
+      border: 1px solid var(--parchment);
+      background: transparent; color: var(--brown);
+      text-decoration: none;
+      font-family: var(--f-ui); font-size:.75rem; font-weight:200;
+      letter-spacing:.15em;
+      position: relative; overflow: hidden;
+      transition: color .3s, border-color .3s;
+    }
+
+    .contact-btn::after {
+      content:''; position:absolute; inset:0;
+      background: var(--tan);
+      transform: scaleX(0); transform-origin: left;
+      transition: transform .35s ease; z-index:-1;
+    }
+
+    .contact-btn:hover { color:var(--ivory); border-color:var(--tan); }
+    .contact-btn:hover::after { transform:scaleX(1); }
+
+    .contact-btn svg { width:16px; height:16px; flex-shrink:0; }
+
+    /* ═══════════════════════════════════
+       Footer
+    ═══════════════════════════════════ */
+    footer {
+      text-align:center; padding:2rem;
+      border-top: 1px solid var(--parchment);
+    }
+
+    .footer-name {
+      font-family: var(--f-hero); font-size:1.8rem;
+      color:var(--tan); display:block; margin-bottom:.3rem;
+    }
+
+    .footer-sub {
+      font-family:var(--f-ui); font-size:.58rem; font-weight:200;
+      letter-spacing:.22em; color:var(--parchment);
+    }
+
+    /* ═══════════════════════════════════
+       响应式
+    ═══════════════════════════════════ */
+    @media (max-width: 960px) {
+      /* Hero：手机改为竖向叠放 */
+      #hero {
+        grid-template-columns: 1fr;
+        grid-template-rows: 88vw 1fr;  /* 照片更高，人物更完整 */
+      }
+
+      .hero-photo { grid-row: 1; }
+      .hero-photo img { object-position: center 70%; } /* 人物偏下，向下移焦点露出人物 */
+      .hero-text  { grid-row: 2; padding: 3rem 2rem 4rem; justify-content: flex-start; }
+
+      /* 手机上：照片底部用深色渐变，过渡到深色文字区 */
+      .hero-photo::after {
+        inset: unset;
+        bottom: 0; left: 0; right: 0;
+        height: 85%;
+        background: linear-gradient(to top,
+          #141009 0%,
+          rgba(20,16,9,.92) 12%,
+          rgba(20,16,9,.72) 25%,
+          rgba(20,16,9,.42) 45%,
+          rgba(20,16,9,.15) 68%,
+          transparent 100%);
+      }
+
+      /* 手机上不需要左侧分隔线 */
+      .hero-photo::before { display: none; }
+
+      .about-layout {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+      }
+
+      .about-frame { max-width: 280px; }
+    }
+
+    @media (max-width: 768px) {
+      .nav { padding: .9rem 1.5rem; }
+      .nav-links { display:none; }
+      .nav-toggle { display:flex; }
+
+      .gallery-grid { grid-template-columns:repeat(2,1fr); gap:8px; }
+
+      /* 服务：移动端隐藏右侧诗句（空间不够），改为显示在下方 */
+      .svc-row { flex-direction: column; align-items: flex-start; gap:.3rem; }
+      .svc-verse { opacity:.6; transform:none; font-size:.72rem; }
+      .svc-row:hover .svc-verse { opacity:.85; transform:none; }
+
+      #gallery, #services { padding: 4.5rem 1.5rem; }
+      #about, #contact    { padding: 4.5rem 1.5rem 3.5rem; }
+    }
+
+    @media (max-width: 480px) {
+      .gallery-grid { grid-template-columns:1fr; }
+      .about-stats  { gap:1.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ╔══════════════════════════════════
+       导航
+  ═══════════════════════════════════╗ -->
+  <nav class="nav" id="mainNav">
+    <a class="nav-logo" href="#hero">松子</a>
+    <ul class="nav-links">
+      <li><a href="#gallery">样片</a></li>
+      <li><a href="#about">关于</a></li>
+      <li><a href="#services">服务</a></li>
+      <li><a href="#contact">联系</a></li>
+    </ul>
+    <button class="nav-toggle" id="menuToggle" aria-label="菜单">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#gallery" onclick="closeMobile()">样 片</a>
+    <a href="#about"   onclick="closeMobile()">关 于</a>
+    <a href="#services" onclick="closeMobile()">服 务</a>
+    <a href="#contact" onclick="closeMobile()">联 系</a>
+  </div>
+
+  <!-- ╔══════════════════════════════════
+       HERO — 左文右图 编辑分屏
+  ═══════════════════════════════════╗ -->
+  <section id="hero">
+
+    <!-- 左侧：文字 -->
+    <div class="hero-text">
+      <!-- 工作室标签 -->
+      <span class="hero-studio">Feifan Vision Studio</span>
+
+      <!-- 诗意主题句 -->
+      <h1 class="hero-name">被光偏爱的<br>都是你</h1>
+
+      <!-- 身份 -->
+      <p class="hero-role">photographer · makeup artist</p>
+
+      <!-- 副句 -->
+      <p class="hero-verse">
+        每一个你，<br>都值得被这样记录
+      </p>
+
+      <div class="hero-scroll">
+        <span class="hero-scroll-label">scroll</span>
+        <div class="hero-scroll-line"></div>
+      </div>
+    </div>
+
+    <!-- 右侧：松子的照片 -->
+    <div class="hero-photo">
+      <img src="images/songzi-portrait.JPG" alt="松子">
+    </div>
+
+  </section>
+
+  <!-- ╔══════════════════════════════════
+       样片画廊
+  ═══════════════════════════════════╗ -->
+  <section id="gallery">
+    <div class="wrap">
+      <div class="section-label-row reveal">
+        <span class="sec-cn">样 片</span>
+        <span class="sec-en">Portfolio · Work</span>
+      </div>
+
+      <div class="gallery-grid">
+        <div class="photo-card reveal" style="transition-delay:.04s">
+          <img src="images/IMG_2469.JPG" alt="复古国风" loading="lazy">
+          <span class="photo-label">复古国风</span>
+        </div>
+        <div class="photo-card reveal" style="transition-delay:.1s">
+          <img src="images/IMG_2470.JPG" alt="圣诞甜心" loading="lazy">
+          <span class="photo-label">圣诞甜心</span>
+        </div>
+        <div class="photo-card reveal" style="transition-delay:.16s">
+          <img src="images/IMG_2471.JPG" alt="冬日外景" loading="lazy">
+          <span class="photo-label">冬日外景</span>
+        </div>
+        <div class="photo-card reveal" style="transition-delay:.22s">
+          <img src="images/IMG_2472.JPG" alt="冬日仙子" loading="lazy">
+          <span class="photo-label">冬日仙子</span>
+        </div>
+        <div class="photo-card reveal" style="transition-delay:.28s">
+          <img src="images/IMG_2473.JPG" alt="雪中红衣" loading="lazy">
+          <span class="photo-label">雪中红衣</span>
+        </div>
+        <div class="photo-card reveal" style="transition-delay:.34s">
+          <img src="images/dongfang-yunwei.png" alt="东方韵味" loading="lazy">
+          <span class="photo-label">东方韵味</span>
+        </div>
+        <div class="photo-card reveal" style="transition-delay:.4s">
+          <img src="images/IMG_2475.JPG" alt="光影私房" loading="lazy">
+          <span class="photo-label">光影私房</span>
+        </div>
+        <div class="photo-card reveal" style="transition-delay:.46s">
+          <img src="images/IMG_2476.JPG" alt="晨光氛围" loading="lazy">
+          <span class="photo-label">晨光氛围</span>
+        </div>
+        <div class="photo-card reveal" style="transition-delay:.52s">
+          <img src="images/IMG_2477.JPG" alt="森系外景" loading="lazy">
+          <span class="photo-label">森系外景</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ╔══════════════════════════════════
+       关于松子
+  ═══════════════════════════════════╗ -->
+  <section id="about">
+    <div class="about-layout">
+
+      <!-- 左：老照片（替换成松子个人照片） -->
+      <div class="about-frame reveal">
+        <img src="images/about-songzi.JPG" alt="松子">
+      </div>
+
+      <!-- 右：文字 -->
+      <div class="about-text">
+        <blockquote class="about-quote reveal">
+          "我不拍照片。<br>
+          我在等待那个刹那——<br>
+          光与你的灵魂，恰好在一起。"
+        </blockquote>
+
+        <div class="about-body reveal">
+          <p>我叫松子。</p>
+          <p>相机于我，是一种「听见」的方式。我听见晨光悄悄落在你肩头的声音，听见你微微垂眸时睫毛轻颤的气息，听见那些你以为再平常不过的瞬间里，其实藏着多少值得被永远珍藏的东西。</p>
+          <p>每一次拍摄，从为你画好妆的那一刻起，便是我陪你成为你自己的开始。</p>
+        </div>
+
+        <div class="about-stats reveal">
+          <div>
+            <span class="stat-num">7000+</span>
+            <span class="stat-label">相遇的人</span>
+          </div>
+          <div>
+            <span class="stat-num">20</span>
+            <span class="stat-label">年 光 阴</span>
+          </div>
+          <div>
+            <span class="stat-num">∞</span>
+            <span class="stat-label">对美的热情</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ╔══════════════════════════════════
+       服务 — 竖排分栏（5格胶片负片）
+  ═══════════════════════════════════╗ -->
+  <section id="services">
+    <div class="wrap">
+      <div class="section-label-row reveal">
+        <span class="sec-cn">服 务</span>
+        <span class="sec-en">What We Create</span>
+      </div>
+
+      <div class="services-grid">
+
+        <div class="svc-col reveal">
+          <span class="svc-cn-vert">个人写真</span>
+          <div class="svc-bottom">
+            <span class="svc-en-vert">Portrait</span>
+            <p class="svc-desc">让光，告诉你你有多美</p>
+          </div>
+        </div>
+
+        <div class="svc-col reveal" style="transition-delay:.07s">
+          <span class="svc-cn-vert">婚纱摄影</span>
+          <div class="svc-bottom">
+            <span class="svc-en-vert">Wedding</span>
+            <p class="svc-desc">记录那个你愿意等一生的人</p>
+          </div>
+        </div>
+
+        <div class="svc-col reveal" style="transition-delay:.14s">
+          <span class="svc-cn-vert">化妆造型</span>
+          <div class="svc-bottom">
+            <span class="svc-en-vert">Makeup &amp; Styling</span>
+            <p class="svc-desc">美，从来不是伪装，是唤醒</p>
+          </div>
+        </div>
+
+        <div class="svc-col reveal" style="transition-delay:.21s">
+          <span class="svc-cn-vert">亲子写真</span>
+          <div class="svc-bottom">
+            <span class="svc-en-vert">Family</span>
+            <p class="svc-desc">时光悄悄走，相片替你记着</p>
+          </div>
+        </div>
+
+        <div class="svc-col reveal" style="transition-delay:.28s">
+          <span class="svc-cn-vert">闺蜜拍摄</span>
+          <div class="svc-bottom">
+            <span class="svc-en-vert">Friends</span>
+            <p class="svc-desc">友情，是这世上最温柔的礼物</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ╔══════════════════════════════════
+       联系
+  ═══════════════════════════════════╗ -->
+  <section id="contact">
+    <div class="section-label-row reveal" style="border-color:transparent; padding-bottom:2.5rem;">
+      <span class="sec-cn">联 系</span>
+      <span class="sec-en">Say Hello</span>
+    </div>
+
+    <p class="contact-verse reveal">
+      如果你也相信，<br>有些美，值得被永远留住——
+    </p>
+    <p class="contact-sub reveal">欢迎来找我，我在这里。</p>
+
+    <div class="contact-row reveal">
+      <a href="https://www.xiaohongshu.com/user/profile/2659258975" target="_blank" rel="noopener" class="contact-btn">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.5 7.5h-3V8h3v1.5zm-3 1.5h3v5h-3v-5zM9.5 8h1.5v1.5H9.5V8zm0 3h1.5v5H9.5v-5zm-2-3H9v1.5H7.5V8zm0 3H9v5H7.5v-5z" fill="currentColor"/>
+        </svg>
+        小红书 · 2659258975
+      </a>
+      <a href="#" class="contact-btn">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M8.69 2.19C3.89 2.19 0 5.48 0 9.53c0 2.21 1.17 4.2 3 5.55a.59.59 0 01.21.67l-.39 1.48c-.02.07-.05.14-.05.21 0 .16.13.3.3.3a.33.33 0 00.17-.05l1.9-1.11a.86.86 0 01.72-.1 10.16 10.16 0 002.84.4c.27 0 .54-.02.81-.05-.86-2.58.16-4.97 1.93-6.45 1.7-1.41 3.88-1.98 5.85-1.84-.58-3.58-3.9-6.35-7.6-6.35zM5.79 5.99c.64 0 1.16.53 1.16 1.18A1.17 1.17 0 015.79 8.35 1.17 1.17 0 014.62 7.17c0-.65.52-1.18 1.17-1.18zm5.81 0c.64 0 1.16.53 1.16 1.18a1.17 1.17 0 01-1.16 1.18 1.17 1.17 0 01-1.16-1.18c0-.65.52-1.18 1.16-1.18zm5.34 2.87c-1.8-.05-3.75.51-5.16 1.67-1.57 1.32-2.23 3.31-1.7 5.1l.02.1C10.58 17.63 12.69 19.2 15.7 19.2c.76 0 1.53-.11 2.26-.32a.589.589 0 01.52.07l1.53.9a.26.26 0 00.13.04.24.24 0 00.24-.24.24.24 0 00-.04-.17l-.31-1.19a.47.47 0 01.17-.54 6.18 6.18 0 002.42-4.48c.06-2.94-3.17-4.56-5.68-4.61zm-3.35 2.54a.935.935 0 110 1.87.935.935 0 010-1.87zm5.34 0a.935.935 0 110 1.87.935.935 0 010-1.87z" fill="currentColor"/>
+        </svg>
+        微信咨询
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <span class="footer-name">松子</span>
+    <p class="footer-sub">Feifan Vision Studio &nbsp;·&nbsp; © 2025 &nbsp;·&nbsp; 用光写诗，为你造像</p>
+  </footer>
+
+  <!-- ╔══════════════════════════════════
+       JavaScript
+  ═══════════════════════════════════╗ -->
+  <script>
+  (() => {
+
+    /* ── Ember 잔광鼠标 ─────────────────────────────────────────
+       核心点：精确跟随 mousemove，position:fixed + top:0 + left:0
+       圆环：requestAnimationFrame lerp，平滑滞后
+       火花：移动时随机飞出，CSS animation 自动消退
+    ─────────────────────────────────────────────────────── */
+    if (window.matchMedia('(hover: hover)').matches) {
+
+      // 创建核心点和滞后圆环
+      const core = document.createElement('div');
+      core.className = 'c-core';
+      const ring = document.createElement('div');
+      ring.className = 'c-ring';
+      document.body.append(core, ring);
+
+      let mx = -200, my = -200;  // 鼠标真实坐标
+      let rx = -200, ry = -200;  // 圆环跟随坐标（带惰性）
+      let lastSpark = 0;
+
+      // mousemove：核心点精确同步，顺便生成火花
+      document.addEventListener('mousemove', e => {
+        mx = e.clientX;
+        my = e.clientY;
+
+        // 核心点：直接跟随，零延迟
+        core.style.transform = `translate(${mx}px,${my}px) translate(-50%,-50%)`;
+
+        // 每 70ms 生成一颗火花
+        const now = Date.now();
+        if (now - lastSpark > 70) {
+          lastSpark = now;
+          const spark = document.createElement('div');
+          spark.className = 'c-spark';
+          // 随机飞出方向和距离
+          const a  = Math.random() * Math.PI * 2;
+          const d1 = 2 + Math.random() * 4;   // 起始偏移（在鼠标附近）
+          const d2 = 10 + Math.random() * 18; // 终点偏移
+          spark.style.setProperty('--ex',  `${mx + Math.cos(a) * d1 - 1.5}px`);
+          spark.style.setProperty('--ey',  `${my + Math.sin(a) * d1 - 1.5}px`);
+          spark.style.setProperty('--ex2', `${mx + Math.cos(a) * d2 - 1.5}px`);
+          spark.style.setProperty('--ey2', `${my + Math.sin(a) * d2 - 20}px`); // 偏上飘
+          document.body.appendChild(spark);
+          setTimeout(() => spark.remove(), 680);
+        }
+      });
+
+      // 鼠标离开/进入页面
+      document.addEventListener('mouseleave', () => {
+        core.style.opacity = '0';
+        ring.style.opacity = '0';
+      });
+      document.addEventListener('mouseenter', () => {
+        core.style.opacity = '1';
+        ring.style.opacity = '1';
+      });
+
+      // rAF 循环：圆环平滑追随
+      (function tick() {
+        rx += (mx - rx) * 0.11;
+        ry += (my - ry) * 0.11;
+        ring.style.transform = `translate(${rx}px,${ry}px) translate(-50%,-50%)`;
+        requestAnimationFrame(tick);
+      })();
+
+      // 悬停照片：圆环扩张
+      document.querySelectorAll('.photo-card').forEach(el => {
+        el.addEventListener('mouseenter', () => {
+          ring.classList.add('on-photo');
+          ring.classList.remove('on-link');
+        });
+        el.addEventListener('mouseleave', () => ring.classList.remove('on-photo'));
+      });
+
+      // 悬停链接/按钮：圆环收缩
+      document.querySelectorAll('a, button, .svc-row').forEach(el => {
+        el.addEventListener('mouseenter', () => {
+          ring.classList.add('on-link');
+          ring.classList.remove('on-photo');
+        });
+        el.addEventListener('mouseleave', () => ring.classList.remove('on-link'));
+      });
+    }
+
+    /* ── 花朵绽放 ── */
+    const palettes = [
+      ['#F4C6D0','#F8E0E5','#FADADD'],
+      ['#F0D9C8','#E8C4A0','#F5E6D8'],
+      ['#D8E8D4','#C4D8C0','#E8F0E4'],
+      ['#E8D4E8','#D8C0D8','#F0E8F0'],
+    ];
+
+    function bloom(x, y) {
+      const el = document.createElement('div');
+      el.className = 'bloom';
+      el.style.cssText = `left:${x}px;top:${y}px`;
+      const pal = palettes[Math.floor(Math.random() * palettes.length)];
+
+      for (let i = 0; i < 5; i++) {
+        const p = document.createElement('div');
+        p.className = 'bloom-petal';
+        p.style.cssText = `--a:${i*72}deg;--delay:${i*.045}s;background:linear-gradient(to top,${pal[i%3]},rgba(255,255,255,.5))`;
+        el.appendChild(p);
+      }
+
+      const c = document.createElement('div');
+      c.className = 'bloom-center';
+      el.appendChild(c);
+
+      for (let i = 0; i < 7; i++) {
+        const s = document.createElement('div');
+        s.className = 'bloom-spark';
+        s.style.cssText = `--a:${i*(360/7)}deg;--d:${22+Math.random()*16}px;--delay:${i*.03}s;background:${pal[i%3]}`;
+        el.appendChild(s);
+      }
+
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 1100);
+    }
+
+    document.addEventListener('touchstart', e => {
+      bloom(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+
+    document.addEventListener('click', e => bloom(e.clientX, e.clientY));
+
+    /* ── 滚动淡入 ── */
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in-view'); io.unobserve(e.target); } });
+    }, { threshold: .1, rootMargin: '0px 0px -35px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    /* ── 导航阴影 ── */
+    const nav = document.getElementById('mainNav');
+    window.addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 40), { passive: true });
+
+    /* ── Hero视差 ── */
+    const heroText = document.querySelector('.hero-text');
+    window.addEventListener('scroll', () => {
+      heroText.style.transform = `translateY(${scrollY * .22}px)`;
+    }, { passive: true });
+
+    /* ── Hero光尘粒子 ── */
+    const hero = document.getElementById('hero');
+    for (let i = 0; i < 12; i++) {
+      const p = document.createElement('div');
+      p.className = 'hero-particle';
+      p.style.cssText = `left:${Math.random()*100}%;--dur:${5+Math.random()*8}s;--delay:${Math.random()*7}s;--op:${.08+Math.random()*.22};--dx:${(Math.random()-.5)*35}px`;
+      hero.appendChild(p);
+    }
+
+    /* ── 移动端菜单 ── */
+    const toggle = document.getElementById('menuToggle');
+    const mMenu  = document.getElementById('mobileMenu');
+    toggle.addEventListener('click', () => mMenu.classList.toggle('open'));
+    window.closeMobile = () => mMenu.classList.remove('open');
+    document.addEventListener('click', e => {
+      if (!toggle.contains(e.target) && !mMenu.contains(e.target)) mMenu.classList.remove('open');
+    });
+
+  })();
+  </script>
+</body>
+</html>
